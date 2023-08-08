@@ -1,0 +1,890 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model accession_numbers {
+  id          Int       @id @default(autoincrement())
+  number      String?   @db.VarChar(255)
+  compound_id Int?
+  created_at  DateTime? @db.DateTime(0)
+  updated_at  DateTime? @db.DateTime(0)
+  source_id   Int?
+  source_type String?   @db.VarChar(255)
+
+  @@index([compound_id], map: "index_accession_numbers_on_compound_id")
+  @@index([source_id, source_type], map: "index_accession_numbers_on_source_id_and_source_type")
+}
+
+model cite_this_article_referencings {
+  id                 Int                @id @default(autoincrement())
+  article_id         Int
+  referencer_id      Int
+  referencer_type    String             @db.VarChar(255)
+  created_at         DateTime           @db.DateTime(0)
+  updated_at         DateTime           @db.DateTime(0)
+  cite_this_articles cite_this_articles @relation(fields: [article_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_rails_e74ef0242f")
+
+  @@unique([article_id, referencer_id, referencer_type], map: "unique_article_referencer")
+  @@index([referencer_id, referencer_type], map: "cite_this_article_referencings_all_ids")
+  @@index([article_id], map: "index_cite_this_article_referencings_on_article_id")
+  @@index([referencer_id], map: "index_cite_this_article_referencings_on_referencer_id")
+  @@index([referencer_id, article_id], map: "new_index")
+}
+
+model cite_this_articles {
+  id                             Int                              @id @default(autoincrement())
+  pubmed_id                      Int                              @unique(map: "index_cite_this_articles_on_pubmed_id")
+  citation                       String?                          @db.Text
+  created_at                     DateTime                         @db.DateTime(0)
+  updated_at                     DateTime                         @db.DateTime(0)
+  ref_id                         String?                          @db.VarChar(255)
+  doi                            String?                          @db.VarChar(255)
+  title                          String                           @db.VarChar(1000)
+  authors                        String                           @db.Text
+  source                         String?                          @db.VarChar(255)
+  journal                        String?                          @db.VarChar(255)
+  volume                         String?                          @db.VarChar(255)
+  year                           Int
+  date                           String                           @db.VarChar(255)
+  pages                          String?                          @db.VarChar(255)
+  issue                          String?                          @db.VarChar(255)
+  abstract                       String?                          @db.Text
+  cite_this_article_referencings cite_this_article_referencings[]
+}
+
+model cite_this_external_link_referencings {
+  id                       Int                      @id @default(autoincrement())
+  external_link_id         Int
+  referencer_id            Int
+  referencer_type          String                   @db.VarChar(255)
+  created_at               DateTime                 @db.DateTime(0)
+  updated_at               DateTime                 @db.DateTime(0)
+  cite_this_external_links cite_this_external_links @relation(fields: [external_link_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_rails_a798195c86")
+
+  @@index([referencer_id, referencer_type], map: "external_link_referencings_all_ids")
+  @@index([external_link_id], map: "index_cite_this_external_link_referencings_on_external_link_id")
+  @@index([referencer_id], map: "index_cite_this_external_link_referencings_on_referencer_id")
+}
+
+model cite_this_external_links {
+  id                                   Int                                    @id @default(autoincrement())
+  url                                  String                                 @db.VarChar(1000)
+  name                                 String                                 @db.VarChar(255)
+  created_at                           DateTime                               @db.DateTime(0)
+  updated_at                           DateTime                               @db.DateTime(0)
+  ref_id                               String?                                @db.VarChar(255)
+  cite_this_external_link_referencings cite_this_external_link_referencings[]
+}
+
+model cite_this_textbook_referencings {
+  id                  Int                 @id @default(autoincrement())
+  textbook_id         Int
+  referencer_id       Int
+  referencer_type     String              @db.VarChar(255)
+  created_at          DateTime            @db.DateTime(0)
+  updated_at          DateTime            @db.DateTime(0)
+  pages               String?             @db.VarChar(255)
+  chapter             String?             @db.VarChar(255)
+  chapter_author      String?             @db.VarChar(255)
+  cite_this_textbooks cite_this_textbooks @relation(fields: [textbook_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_rails_c859c1f8e3")
+
+  @@index([referencer_id, referencer_type], map: "cite_this_article_referencings_all_ids")
+  @@index([referencer_id], map: "index_cite_this_textbook_referencings_on_referencer_id")
+  @@index([textbook_id], map: "index_cite_this_textbook_referencings_on_textbook_id")
+}
+
+model cite_this_textbooks {
+  id                              Int                               @id @default(autoincrement())
+  isbn                            String?                           @db.VarChar(255)
+  title                           String                            @db.Text
+  created_at                      DateTime                          @db.DateTime(0)
+  updated_at                      DateTime                          @db.DateTime(0)
+  ref_id                          String?                           @db.VarChar(255)
+  authors                         String                            @db.VarChar(255)
+  edition                         String?                           @db.VarChar(255)
+  publisher                       String                            @db.VarChar(255)
+  year                            String                            @db.VarChar(255)
+  book_format                     String?                           @db.VarChar(255)
+  ean                             String?                           @db.VarChar(255)
+  cite_this_textbook_referencings cite_this_textbook_referencings[]
+
+  @@index([isbn], map: "index_cite_this_textbooks_on_isbn")
+}
+
+model compound_alternate_parents {
+  id          Int        @id @default(autoincrement())
+  name        String?    @db.VarChar(255)
+  compound_id Int?
+  creator_id  Int?
+  updater_id  Int?
+  created_at  DateTime   @db.DateTime(0)
+  updated_at  DateTime   @db.DateTime(0)
+  compounds   compounds? @relation(fields: [compound_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_0aefaa1014")
+
+  @@index([compound_id], map: "index_compound_alternate_parents_on_compound_id")
+}
+
+model compound_external_descriptors {
+  id          Int        @id @default(autoincrement())
+  external_id String?    @db.VarChar(255)
+  annotations String?    @db.VarChar(255)
+  compound_id Int?
+  creator_id  Int?
+  updater_id  Int?
+  created_at  DateTime   @db.DateTime(0)
+  updated_at  DateTime   @db.DateTime(0)
+  compounds   compounds? @relation(fields: [compound_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_2395524b9a")
+
+  @@index([compound_id], map: "index_compound_external_descriptors_on_compound_id")
+}
+
+model compound_ontology_terms {
+  id               Int      @id @default(autoincrement())
+  compound_id      Int?
+  export           Boolean?
+  ontology_term_id Int?
+  created_at       DateTime @db.DateTime(0)
+  updated_at       DateTime @db.DateTime(0)
+}
+
+model compound_substituents {
+  id          Int        @id @default(autoincrement())
+  name        String?    @db.VarChar(255)
+  compound_id Int?
+  creator_id  Int?
+  updater_id  Int?
+  created_at  DateTime   @db.DateTime(0)
+  updated_at  DateTime   @db.DateTime(0)
+  compounds   compounds? @relation(fields: [compound_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_1e68999a98")
+
+  @@index([compound_id], map: "index_compound_substituents_on_compound_id")
+}
+
+model compound_synonyms {
+  id             Int       @id @default(autoincrement())
+  synonym        String    @unique(map: "index_compound_synonyms_on_synonym") @db.VarChar(255)
+  synonym_source String    @db.VarChar(255)
+  created_at     DateTime? @db.DateTime(0)
+  updated_at     DateTime? @db.DateTime(0)
+  source_id      Int?
+  source_type    String?   @db.VarChar(255)
+
+  @@index([source_id, source_type], map: "index_compound_synonyms_on_source_id_and_source_type")
+}
+
+model compounds {
+  id                                Int                             @id @default(autoincrement())
+  legacy_id                         Int?
+  type                              String                          @db.VarChar(255)
+  public_id                         String                          @unique(map: "index_compounds_on_public_id") @db.VarChar(9)
+  name                              String                          @unique(map: "index_compounds_on_name") @db.VarChar(255)
+  export                            Boolean?                        @default(false)
+  state                             String?                         @db.VarChar(255)
+  annotation_quality                String?                         @db.VarChar(255)
+  description                       String?                         @db.MediumText
+  cas_number                        String?                         @db.VarChar(255)
+  melting_point                     String?                         @db.MediumText
+  protein_formula                   String?                         @db.VarChar(255)
+  protein_weight                    String?                         @db.VarChar(255)
+  experimental_solubility           String?                         @db.VarChar(255)
+  experimental_logp                 String?                         @db.VarChar(255)
+  hydrophobicity                    String?                         @db.VarChar(255)
+  isoelectric_point                 String?                         @db.VarChar(255)
+  metabolism                        String?                         @db.MediumText
+  kegg_compound_id                  String?                         @db.VarChar(255)
+  pubchem_compound_id               String?                         @db.VarChar(255)
+  pubchem_substance_id              String?                         @db.VarChar(255)
+  chebi_id                          String?                         @db.VarChar(255)
+  het_id                            String?                         @db.VarChar(255)
+  uniprot_id                        String?                         @db.VarChar(255)
+  uniprot_name                      String?                         @db.VarChar(255)
+  genbank_id                        String?                         @db.VarChar(255)
+  wikipedia_id                      String?                         @db.VarChar(255)
+  synthesis_citations               String?                         @db.MediumText
+  general_citations                 String?                         @db.MediumText
+  comments                          String?                         @db.MediumText
+  protein_structure_file_name       String?                         @db.VarChar(255)
+  protein_structure_content_type    String?                         @db.VarChar(255)
+  protein_structure_file_size       Int?
+  protein_structure_updated_at      DateTime?                       @db.DateTime(0)
+  msds_file_name                    String?                         @db.VarChar(255)
+  msds_content_type                 String?                         @db.VarChar(255)
+  msds_file_size                    Int?
+  msds_updated_at                   DateTime?                       @db.DateTime(0)
+  creator_id                        Int?
+  updater_id                        Int?
+  created_at                        DateTime?                       @db.DateTime(0)
+  updated_at                        DateTime?                       @db.DateTime(0)
+  phenolexplorer_id                 Int?
+  dfc_id                            String?                         @db.VarChar(255)
+  hmdb_id                           String?                         @db.VarChar(255)
+  duke_id                           String?                         @db.VarChar(255)
+  drugbank_id                       String?                         @db.VarChar(255)
+  bigg_id                           Int?
+  eafus_id                          String?                         @db.VarChar(255)
+  knapsack_id                       String?                         @db.VarChar(255)
+  boiling_point                     String?                         @db.VarChar(255)
+  boiling_point_reference           String?                         @db.VarChar(255)
+  charge                            String?                         @db.VarChar(255)
+  charge_reference                  String?                         @db.VarChar(255)
+  density                           String?                         @db.VarChar(255)
+  density_reference                 String?                         @db.VarChar(255)
+  optical_rotation                  String?                         @db.VarChar(255)
+  optical_rotation_reference        String?                         @db.VarChar(255)
+  percent_composition               String?                         @db.VarChar(255)
+  percent_composition_reference     String?                         @db.VarChar(255)
+  physical_description              String?                         @db.MediumText
+  physical_description_reference    String?                         @db.MediumText
+  refractive_index                  String?                         @db.VarChar(255)
+  refractive_index_reference        String?                         @db.VarChar(255)
+  uv_index                          String?                         @db.VarChar(255)
+  uv_index_reference                String?                         @db.VarChar(255)
+  experimental_pka                  String?                         @db.VarChar(255)
+  experimental_pka_reference        String?                         @db.VarChar(255)
+  experimental_solubility_reference String?                         @db.VarChar(255)
+  experimental_logp_reference       String?                         @db.VarChar(255)
+  hydrophobicity_reference          String?                         @db.VarChar(255)
+  isoelectric_point_reference       String?                         @db.VarChar(255)
+  melting_point_reference           String?                         @db.VarChar(255)
+  moldb_alogps_logp                 String?                         @db.VarChar(255)
+  moldb_logp                        String?                         @db.VarChar(255)
+  moldb_alogps_logs                 String?                         @db.VarChar(255)
+  moldb_smiles                      String?                         @db.MediumText
+  moldb_pka                         String?                         @db.VarChar(255)
+  moldb_formula                     String?                         @db.VarChar(255)
+  moldb_average_mass                Decimal?                        @db.Decimal(9, 4)
+  moldb_inchi                       String?                         @db.MediumText
+  moldb_mono_mass                   Decimal?                        @db.Decimal(14, 9)
+  moldb_inchikey                    String?                         @db.VarChar(255)
+  moldb_alogps_solubility           String?                         @db.VarChar(255)
+  moldb_id                          Int?
+  moldb_iupac                       String?                         @db.MediumText
+  structure_source                  String?                         @db.VarChar(255)
+  duplicate_id                      String?                         @db.VarChar(255)
+  old_dfc_id                        String?                         @db.VarChar(255)
+  dfc_name                          String?                         @db.MediumText
+  compound_source                   String?                         @db.VarChar(255)
+  flavornet_id                      String?                         @db.VarChar(255)
+  goodscent_id                      String?                         @db.VarChar(255)
+  superscent_id                     String?                         @db.VarChar(255)
+  phenolexplorer_metabolite_id      Int?
+  kingdom                           String?                         @db.VarChar(255)
+  superklass                        String?                         @db.VarChar(255)
+  klass                             String?                         @db.VarChar(255)
+  subklass                          String?                         @db.VarChar(255)
+  direct_parent                     String?                         @db.VarChar(255)
+  molecular_framework               String?                         @db.VarChar(255)
+  chembl_id                         String?                         @db.VarChar(255)
+  chemspider_id                     String?                         @db.VarChar(255)
+  meta_cyc_id                       String?                         @db.VarChar(255)
+  foodcomex                         Boolean?
+  phytohub_id                       String?                         @db.VarChar(255)
+  vmh_id                            String?                         @db.VarChar(255)
+  fbonto_id                         String?                         @db.VarChar(255)
+  status                            Int                             @db.TinyInt
+  compound_alternate_parents        compound_alternate_parents[]
+  compound_external_descriptors     compound_external_descriptors[]
+  compound_substituents             compound_substituents[]
+  compounds_pathways                compounds_pathways[]
+
+  @@unique([name, public_id], map: "index_compounds_on_name_and_public_id")
+}
+
+model compounds_enzymes {
+  id          Int       @id @default(autoincrement())
+  compound_id Int
+  enzyme_id   Int
+  citations   String    @db.MediumText
+  created_at  DateTime? @db.DateTime(0)
+  updated_at  DateTime? @db.DateTime(0)
+  creator_id  Int?
+  updater_id  Int?
+
+  @@unique([compound_id, enzyme_id], map: "index_compounds_enzymes_on_compound_id_and_enzyme_id")
+}
+
+model compounds_flavors {
+  id          Int       @id @default(autoincrement())
+  compound_id Int
+  flavor_id   Int
+  citations   String    @db.MediumText
+  created_at  DateTime? @db.DateTime(0)
+  updated_at  DateTime? @db.DateTime(0)
+  creator_id  Int?
+  updater_id  Int?
+  source_id   Int?
+  source_type String?   @db.VarChar(255)
+
+  @@unique([compound_id, flavor_id], map: "index_compounds_flavors_on_compound_id_and_flavor_id")
+  @@index([source_id, source_type], map: "index_compounds_flavors_on_source_id_and_source_type")
+}
+
+model compounds_health_effects {
+  id                      Int       @id @default(autoincrement())
+  compound_id             Int
+  health_effect_id        Int
+  orig_health_effect_name String?   @db.VarChar(255)
+  orig_compound_name      String?   @db.VarChar(255)
+  orig_citation           String?   @db.MediumText
+  citation                String    @db.MediumText
+  citation_type           String    @db.VarChar(255)
+  created_at              DateTime? @db.DateTime(0)
+  updated_at              DateTime? @db.DateTime(0)
+  creator_id              Int?
+  updater_id              Int?
+  source_id               Int?
+  source_type             String?   @db.VarChar(255)
+
+  @@index([source_id, source_type], map: "index_compounds_health_effects_on_source_id_and_source_type")
+}
+
+model compounds_pathways {
+  id          Int        @id @default(autoincrement())
+  compound_id Int?
+  pathway_id  Int?
+  creator_id  Int?
+  updater_id  Int?
+  created_at  DateTime   @db.DateTime(0)
+  updated_at  DateTime   @db.DateTime(0)
+  pathways    pathways?  @relation(fields: [pathway_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_14c02acb79")
+  compounds   compounds? @relation(fields: [compound_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_34b0bf14de")
+
+  @@index([compound_id], map: "index_compounds_pathways_on_compound_id")
+  @@index([pathway_id], map: "index_compounds_pathways_on_pathway_id")
+}
+
+model contents {
+  id                        Int       @id @default(autoincrement())
+  source_id                 Int?
+  source_type               String?   @db.VarChar(255)
+  food_id                   Int
+  orig_food_id              String?   @db.VarChar(255)
+  orig_food_common_name     String?   @db.VarChar(255)
+  orig_food_scientific_name String?   @db.VarChar(255)
+  orig_food_part            String?   @db.VarChar(255)
+  orig_source_id            String?   @db.VarChar(255)
+  orig_source_name          String?   @db.VarChar(255)
+  orig_content              Decimal?  @db.Decimal(15, 9)
+  orig_min                  Decimal?  @db.Decimal(15, 9)
+  orig_max                  Decimal?  @db.Decimal(15, 9)
+  orig_unit                 String?   @default("") @db.VarChar(255)
+  orig_citation             String?   @db.MediumText
+  citation                  String    @db.MediumText
+  citation_type             String    @db.VarChar(255)
+  creator_id                Int?
+  updater_id                Int?
+  created_at                DateTime? @db.DateTime(0)
+  updated_at                DateTime? @db.DateTime(0)
+  orig_method               String?   @db.VarChar(255)
+  orig_unit_expression      String?   @db.VarChar(255)
+  standard_content          Decimal?  @db.Decimal(15, 9)
+  preparation_type          String?   @db.VarChar(255)
+  export                    Int?      @default(1) @db.TinyInt
+
+  @@index([source_id, source_type, food_id], map: "content_source_and_food_index")
+}
+
+model enzyme_synonyms {
+  id         Int       @id @default(autoincrement())
+  enzyme_id  Int
+  synonym    String    @unique(map: "index_enzyme_synonyms_on_synonym") @db.VarChar(255)
+  source     String    @db.VarChar(255)
+  created_at DateTime? @db.DateTime(0)
+  updated_at DateTime? @db.DateTime(0)
+
+  @@index([enzyme_id], map: "index_enzyme_synonyms_on_enzyme_id")
+}
+
+model enzymes {
+  id                    Int       @id @default(autoincrement())
+  name                  String    @unique(map: "index_enzymes_on_name") @db.VarChar(255)
+  gene_name             String?   @unique(map: "index_enzymes_on_gene_name") @db.VarChar(255)
+  description           String?   @db.MediumText
+  go_classification     String?   @db.MediumText
+  general_function      String?   @db.MediumText
+  specific_function     String?   @db.MediumText
+  pathway               String?   @db.MediumText
+  reaction              String?   @db.MediumText
+  cellular_location     String?   @db.VarChar(255)
+  signals               String?   @db.MediumText
+  transmembrane_regions String?   @db.MediumText
+  molecular_weight      Decimal?  @db.Decimal(15, 9)
+  theoretical_pi        Decimal?  @db.Decimal(15, 9)
+  locus                 String?   @db.VarChar(255)
+  chromosome            String?   @db.VarChar(255)
+  uniprot_name          String?   @unique(map: "index_enzymes_on_uniprot_name") @db.VarChar(255)
+  uniprot_id            String?   @unique(map: "index_enzymes_on_uniprot_id") @db.VarChar(100)
+  pdb_id                String?   @unique(map: "index_enzymes_on_pdb_id") @db.VarChar(10)
+  genbank_protein_id    String?   @unique(map: "index_enzymes_on_genbank_protein_id") @db.VarChar(20)
+  genbank_gene_id       String?   @unique(map: "index_enzymes_on_genbank_gene_id") @db.VarChar(20)
+  genecard_id           String?   @unique(map: "index_enzymes_on_genecard_id") @db.VarChar(20)
+  genatlas_id           String?   @unique(map: "index_enzymes_on_genatlas_id") @db.VarChar(20)
+  hgnc_id               String?   @unique(map: "index_enzymes_on_hgnc_id") @db.VarChar(20)
+  hprd_id               String?   @unique(map: "index_enzymes_on_hprd_id") @db.VarChar(255)
+  organism              String?   @db.VarChar(255)
+  general_citations     String?   @db.MediumText
+  comments              String?   @db.MediumText
+  creator_id            Int?
+  updater_id            Int?
+  created_at            DateTime? @db.DateTime(0)
+  updated_at            DateTime? @db.DateTime(0)
+}
+
+model flavors {
+  id           Int       @id @default(autoincrement())
+  name         String    @unique(map: "index_flavors_on_name") @db.VarChar(255)
+  flavor_group String?   @db.VarChar(255)
+  category     String?   @db.VarChar(255)
+  created_at   DateTime? @db.DateTime(0)
+  updated_at   DateTime? @db.DateTime(0)
+  creator_id   Int?
+  updater_id   Int?
+}
+
+model food_taxonomies {
+  id                   Int      @id @default(autoincrement())
+  food_id              Int?
+  ncbi_taxonomy_id     Int?
+  classification_name  String?  @db.VarChar(255)
+  classification_order Int?
+  created_at           DateTime @db.DateTime(0)
+  updated_at           DateTime @db.DateTime(0)
+}
+
+model foodcomex_compound_providers {
+  id                    Int       @id @default(autoincrement())
+  foodcomex_compound_id Int
+  provider_id           Int
+  created_at            DateTime? @db.DateTime(0)
+  updated_at            DateTime? @db.DateTime(0)
+
+  @@index([foodcomex_compound_id], map: "index_foodcomex_compound_providers_on_foodcomex_compound_id")
+  @@index([provider_id], map: "index_foodcomex_compound_providers_on_provider_id")
+}
+
+model foodcomex_compound_requests {
+  id                           Int       @id @default(autoincrement())
+  admin_user_id                Int
+  structure                    String?   @db.Text
+  inchikey                     String?   @db.VarChar(255)
+  inchi                        String?   @db.VarChar(255)
+  smiles                       String?   @db.VarChar(255)
+  structure_image_file_name    String?   @db.VarChar(255)
+  structure_image_content_type String?   @db.VarChar(255)
+  structure_image_file_size    Int?
+  structure_image_updated_at   DateTime? @db.DateTime(0)
+  name                         String?   @db.VarChar(255)
+  message                      String?   @db.Text
+  created_at                   DateTime  @db.DateTime(0)
+  updated_at                   DateTime  @db.DateTime(0)
+}
+
+model foodcomex_compounds {
+  id                                       Int       @id @default(autoincrement())
+  compound_id                              Int
+  origin                                   String?   @db.VarChar(255)
+  storage_form                             String?   @db.VarChar(255)
+  maximum_quantity                         String?   @db.VarChar(255)
+  storage_condition                        String?   @db.VarChar(255)
+  contact_name                             String?   @db.VarChar(255)
+  contact_address                          String?   @db.Text
+  contact_email                            String?   @db.VarChar(255)
+  created_at                               DateTime  @db.DateTime(0)
+  updated_at                               DateTime  @db.DateTime(0)
+  export                                   Boolean?
+  purity                                   String?   @db.Text
+  description                              String?   @db.Text
+  spectra_details                          String?   @db.VarChar(255)
+  delivery_time                            String?   @db.VarChar(255)
+  stability                                String?   @db.VarChar(255)
+  admin_user_id                            Int?
+  public_id                                String    @db.VarChar(255)
+  cas_number                               String?   @default("") @db.VarChar(255)
+  taxonomy_class                           String?   @default("") @db.VarChar(255)
+  taxonomy_family                          String?   @default("") @db.VarChar(255)
+  experimental_logp                        String?   @default("") @db.VarChar(255)
+  experimental_solubility                  String?   @default("") @db.VarChar(255)
+  melting_point                            String?   @default("") @db.VarChar(255)
+  food_of_origin                           String?   @default("") @db.VarChar(255)
+  production_method_reference_text         String?   @db.Text
+  production_method_reference_file_name    String?   @db.VarChar(255)
+  production_method_reference_content_type String?   @db.VarChar(255)
+  production_method_reference_file_size    Int?
+  production_method_reference_updated_at   DateTime? @db.DateTime(0)
+  elemental_formula                        String?   @default("") @db.VarChar(255)
+  minimum_quantity                         String?   @default("") @db.VarChar(255)
+  quantity_units                           String?   @default("") @db.VarChar(255)
+  available_spectra                        String?   @db.Text
+  storage_conditions                       String?   @db.Text
+
+  @@index([admin_user_id], map: "index_foodcomex_compounds_on_admin_user_id")
+  @@index([compound_id], map: "index_foodcomex_compounds_on_compound_id")
+}
+
+model foodcomex_user_data {
+  id                        Int       @id @default(autoincrement())
+  role                      String    @default("recipient") @db.VarChar(255)
+  gender                    String?   @db.VarChar(255)
+  position                  String?   @db.VarChar(255)
+  institution               String?   @db.VarChar(255)
+  department                String?   @db.VarChar(255)
+  address                   String?   @db.VarChar(255)
+  city                      String?   @db.VarChar(255)
+  country                   String?   @db.VarChar(255)
+  phone_number              String?   @db.VarChar(255)
+  zip_code                  String?   @db.VarChar(255)
+  institution_type          String?   @db.VarChar(255)
+  area_of_research          String?   @db.VarChar(255)
+  area_of_research_detailed String?   @db.Text
+  activities                String?   @db.Text
+  interests                 String?   @db.Text
+  purpose_of_use            String?   @db.Text
+  created_at                DateTime? @db.DateTime(0)
+  updated_at                DateTime? @db.DateTime(0)
+  admin_user_id             Int?
+}
+
+model foodcomex_vendor_compounds {
+  id                  Int      @id @default(autoincrement())
+  foodcomex_vendor_id String   @db.VarChar(255)
+  catalogue_number    String?  @db.VarChar(255)
+  name                String?  @db.Text
+  cas_number          String?  @db.VarChar(255)
+  inchikey            String?  @db.VarChar(255)
+  url                 String?  @db.VarChar(255)
+  created_at          DateTime @db.DateTime(0)
+  updated_at          DateTime @db.DateTime(0)
+
+  @@index([cas_number], map: "index_foodcomex_vendor_compounds_on_cas_number")
+  @@index([inchikey], map: "index_foodcomex_vendor_compounds_on_inchikey")
+}
+
+model foodcomex_vendors {
+  id         Int      @id @default(autoincrement())
+  name       String?  @db.VarChar(255)
+  url        String?  @db.VarChar(255)
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+}
+
+model foods {
+  id                   Int       @id @default(autoincrement())
+  name                 String    @unique(map: "index_foods_on_name") @db.VarChar(255)
+  name_scientific      String?   @db.VarChar(255)
+  description          String?   @db.MediumText
+  itis_id              String?   @db.VarChar(255)
+  wikipedia_id         String?   @db.VarChar(255)
+  picture_file_name    String?   @db.VarChar(255)
+  picture_content_type String?   @db.VarChar(255)
+  picture_file_size    Int?
+  picture_updated_at   DateTime? @db.DateTime(0)
+  legacy_id            Int?
+  food_group           String?   @db.VarChar(255)
+  food_subgroup        String?   @db.VarChar(255)
+  food_type            String    @db.VarChar(255)
+  created_at           DateTime? @db.DateTime(0)
+  updated_at           DateTime? @db.DateTime(0)
+  creator_id           Int?
+  updater_id           Int?
+  export_to_afcdb      Boolean   @default(false)
+  category             String?   @db.VarChar(255)
+  ncbi_taxonomy_id     Int?
+  export_to_foodb      Boolean?  @default(true)
+  public_id            String?   @db.VarChar(255)
+
+  @@index([export_to_afcdb], map: "index_foods_on_export_to_afcdb")
+  @@index([name_scientific], map: "index_foods_on_name_scientific")
+}
+
+model health_effects {
+  id               Int       @id @default(autoincrement())
+  name             String    @unique(map: "index_health_effects_on_name") @db.VarChar(255)
+  description      String?   @db.MediumText
+  chebi_name       String?   @db.VarChar(255)
+  chebi_id         String?   @db.VarChar(255)
+  created_at       DateTime? @db.DateTime(0)
+  updated_at       DateTime? @db.DateTime(0)
+  creator_id       Int?
+  updater_id       Int?
+  chebi_definition String?   @db.Text
+
+  @@index([chebi_id], map: "index_health_effects_on_chebi_id")
+  @@index([chebi_name], map: "index_health_effects_on_chebi_name")
+}
+
+model map_items_pathways {
+  id            Int       @id @default(autoincrement())
+  map_item_id   Int?
+  map_item_type String?   @db.VarChar(255)
+  pathway_id    Int?
+  created_at    DateTime? @db.DateTime(0)
+  updated_at    DateTime? @db.DateTime(0)
+
+  @@index([map_item_id, map_item_type], map: "index_map_items_pathways_on_map_item_id_and_map_item_type")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model metabolites {
+  id                         Int       @id @default(autoincrement())
+  hmdb_id                    String    @unique(map: "index_tbl_chemical_on_hmdb_id") @default("") @db.VarChar(25)
+  created_at                 DateTime  @db.DateTime(0)
+  updated_at                 DateTime  @db.DateTime(0)
+  export_to_hmdb             Boolean   @default(false)
+  name                       String    @unique(map: "index_metabolites_on_name") @db.VarChar(255)
+  description                String?   @db.MediumText
+  cas                        String?   @db.VarChar(25)
+  synthesis_reference        String?   @db.MediumText
+  state                      String?   @db.VarChar(255)
+  status                     Int       @default(0)
+  comment                    String?   @db.MediumText
+  quantified                 Boolean   @default(false)
+  detected                   Boolean   @default(false)
+  msds_file_name             String?   @db.VarChar(255)
+  msds_content_type          String?   @db.VarChar(255)
+  msds_file_size             Int?
+  msds_updated_at            DateTime? @db.DateTime(0)
+  moldb_id                   Int?
+  moldb_smiles               String?   @db.Text
+  moldb_formula              String?   @db.VarChar(255)
+  moldb_inchi                String?   @db.Text
+  moldb_inchikey             String?   @db.VarChar(255)
+  moldb_iupac                String?   @db.Text
+  moldb_logp                 String?   @db.VarChar(255)
+  moldb_pka                  String?   @db.VarChar(255)
+  moldb_average_mass         Decimal?  @db.Decimal(9, 4)
+  moldb_mono_mass            Decimal?  @db.Decimal(14, 9)
+  moldb_alogps_solubility    String?   @db.VarChar(255)
+  moldb_alogps_logp          String?   @db.VarChar(255)
+  moldb_alogps_logs          String?   @db.VarChar(255)
+  moldb_acceptor_count       String?   @db.VarChar(255)
+  moldb_donor_count          String?   @db.VarChar(255)
+  moldb_rotatable_bond_count String?   @db.VarChar(255)
+  moldb_polar_surface_area   String?   @db.VarChar(255)
+  moldb_refractivity         String?   @db.VarChar(255)
+  moldb_polarizability       String?   @db.VarChar(255)
+  moldb_traditional_iupac    String?   @db.VarChar(255)
+  moldb_formal_charge        Int?
+  moldb_physiological_charge String?   @db.VarChar(255)
+  moldb_pka_strongest_acidic String?   @db.VarChar(255)
+  moldb_pka_strongest_basic  String?   @db.VarChar(255)
+  hml_compound               Boolean   @default(false)
+  predicted_in_hmdb          Boolean?  @default(false)
+  thumb_file_name            String?   @db.VarChar(255)
+  thumb_content_type         String?   @db.VarChar(255)
+  thumb_file_size            Int?
+  thumb_updated_at           DateTime? @db.DateTime(0)
+
+  @@unique([export_to_hmdb, hmdb_id], map: "index_metabolites_on_export_to_hmdb_and_hmdb_id")
+  @@index([export_to_hmdb], map: "index_metabolites_on_export_to_hmdb")
+  @@index([moldb_average_mass], map: "index_metabolites_on_moldb_average_mass")
+  @@index([moldb_inchikey], map: "index_metabolites_on_moldb_inchikey")
+  @@index([moldb_mono_mass], map: "index_metabolites_on_moldb_mono_mass")
+  @@index([status], map: "index_metabolites_on_status")
+  @@index([updated_at], map: "index_metabolites_on_updated_at")
+}
+
+model ncbi_taxonomy_maps {
+  id           Int      @id @default(autoincrement())
+  TaxonomyName String?  @db.VarChar(255)
+  Rank         String?  @db.VarChar(255)
+  created_at   DateTime @db.DateTime(0)
+  updated_at   DateTime @db.DateTime(0)
+}
+
+model nutrients {
+  id                  Int       @id @default(autoincrement())
+  legacy_id           Int?
+  type                String    @db.VarChar(255)
+  public_id           String    @unique(map: "index_nutrients_on_public_id") @db.VarChar(9)
+  name                String    @unique(map: "index_nutrients_on_name") @db.VarChar(255)
+  export              Boolean?  @default(false)
+  state               String?   @db.VarChar(255)
+  annotation_quality  String?   @db.VarChar(255)
+  description         String?   @db.MediumText
+  wikipedia_id        String?   @db.VarChar(255)
+  comments            String?   @db.MediumText
+  dfc_id              String?   @db.VarChar(255)
+  duke_id             String?   @db.VarChar(255)
+  eafus_id            String?   @db.VarChar(255)
+  dfc_name            String?   @db.MediumText
+  compound_source     String?   @db.VarChar(255)
+  metabolism          String?   @db.MediumText
+  synthesis_citations String?   @db.MediumText
+  general_citations   String?   @db.MediumText
+  creator_id          Int?
+  updater_id          Int?
+  created_at          DateTime? @db.DateTime(0)
+  updated_at          DateTime? @db.DateTime(0)
+
+  @@unique([name, public_id], map: "index_nutrients_on_name_and_public_id")
+}
+
+model ontology_synonyms {
+  id               Int             @id @default(autoincrement())
+  ontology_term_id Int?
+  synonym          String?         @db.VarChar(255)
+  external_id      String?         @db.VarChar(255)
+  external_srouce  String?         @db.VarChar(255)
+  parent_id        String?         @db.VarChar(255)
+  parent_source    String?         @db.VarChar(255)
+  comment          String?         @db.VarChar(255)
+  curator          String?         @db.VarChar(255)
+  created_at       DateTime        @db.DateTime(0)
+  updated_at       DateTime        @db.DateTime(0)
+  ontology_terms   ontology_terms? @relation(fields: [ontology_term_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_ad89f73357")
+
+  @@index([ontology_term_id], map: "index_ontology_synonyms_on_ontology_term_id")
+}
+
+model ontology_terms {
+  id                Int                 @id @default(autoincrement())
+  term              String?             @db.VarChar(255)
+  definition        String?             @db.Text
+  external_id       String?             @db.VarChar(255)
+  external_source   String?             @db.VarChar(255)
+  comment           String?             @db.VarChar(255)
+  curator           String?             @db.VarChar(255)
+  parent_id         Int?
+  level             Int?
+  created_at        DateTime            @db.DateTime(0)
+  updated_at        DateTime            @db.DateTime(0)
+  legacy_id         Int?
+  ontology_synonyms ontology_synonyms[]
+}
+
+model pathways {
+  id                 Int                  @id @default(autoincrement())
+  smpdb_id           String?              @db.VarChar(255)
+  kegg_map_id        String?              @db.VarChar(255)
+  name               String?              @db.VarChar(255)
+  created_at         DateTime?            @db.DateTime(0)
+  updated_at         DateTime?            @db.DateTime(0)
+  compounds_pathways compounds_pathways[]
+}
+
+model pdb_identifiers {
+  id          Int       @id @default(autoincrement())
+  compound_id Int?
+  pdb_id      String?   @db.VarChar(255)
+  created_at  DateTime? @db.DateTime(0)
+  updated_at  DateTime? @db.DateTime(0)
+
+  @@index([compound_id], map: "index_pdb_identifiers_on_compound_id")
+}
+
+model pfam_memberships {
+  id         Int       @id @default(autoincrement())
+  enzyme_id  Int?
+  pfam_id    Int?
+  created_at DateTime? @db.DateTime(0)
+  updated_at DateTime? @db.DateTime(0)
+
+  @@unique([enzyme_id, pfam_id], map: "index_pfam_memberships_on_enzyme_id_and_pfam_id")
+}
+
+model pfams {
+  id         Int       @id @default(autoincrement())
+  identifier String?   @db.VarChar(7)
+  name       String?   @db.VarChar(50)
+  created_at DateTime? @db.DateTime(0)
+  updated_at DateTime? @db.DateTime(0)
+}
+
+model references {
+  id          Int      @id @default(autoincrement())
+  ref_type    String?  @db.VarChar(255)
+  text        String?  @db.Text
+  pubmed_id   String?  @db.VarChar(255)
+  link        String?  @db.VarChar(255)
+  title       String?  @db.VarChar(255)
+  creator_id  Int?
+  updater_id  Int?
+  created_at  DateTime @db.DateTime(0)
+  updated_at  DateTime @db.DateTime(0)
+  source_id   Int?
+  source_type String?  @db.VarChar(255)
+
+  @@index([source_type, source_id], map: "index_references_on_source_type_and_source_id")
+}
+
+model schema_migrations {
+  version String @unique(map: "unique_schema_migrations") @db.VarChar(255)
+}
+
+model sequences {
+  id                Int       @id @default(autoincrement())
+  header            String?   @db.VarChar(255)
+  chain             String?   @db.MediumText
+  sequenceable_id   Int?
+  sequenceable_type String?   @db.VarChar(255)
+  type              String?   @db.VarChar(255)
+  created_at        DateTime? @db.DateTime(0)
+  updated_at        DateTime? @db.DateTime(0)
+
+  @@index([sequenceable_id], map: "index_sequences_on_sequenceable_id")
+  @@index([sequenceable_id, sequenceable_type], map: "index_sequences_on_sequenceable_id_and_sequenceable_type")
+  @@index([sequenceable_type], map: "index_sequences_on_sequenceable_type")
+}
+
+model simulate_contents {
+  id                        Int      @id @default(autoincrement())
+  source_id                 Int?
+  source_type               String?  @db.VarChar(255)
+  food_id                   Int?
+  orig_food_id              Int?
+  orig_food_part            String?  @db.VarChar(255)
+  orig_source_id            String?  @db.VarChar(255)
+  orig_source_name          String?  @db.VarChar(255)
+  orig_citation             String?  @db.VarChar(255)
+  citation                  String?  @db.VarChar(255)
+  citation_type             String?  @db.VarChar(255)
+  created_at                DateTime @db.DateTime(0)
+  updated_at                DateTime @db.DateTime(0)
+  orig_min                  Decimal? @db.Decimal(15, 9)
+  orig_max                  Decimal? @db.Decimal(15, 9)
+  orig_unit                 String?  @db.VarChar(255)
+  orig_food_common_name     String?  @db.VarChar(255)
+  orig_food_scientific_name String?  @db.VarChar(255)
+  orig_content              Decimal? @db.Decimal(15, 9)
+  creater_id                String?  @db.VarChar(255)
+  updater_id                String?  @db.VarChar(255)
+  orig_method               String?  @db.VarChar(255)
+  orig_unit_expression      String?  @db.VarChar(255)
+  standard_content          Decimal? @db.Decimal(10, 0)
+  preparation_type          String?  @db.VarChar(255)
+  food_type                 String   @db.VarChar(255)
+
+  @@index([source_id, source_type, food_id], map: "index_simulate_contents_on_source_id_and_source_type_and_food_id")
+}
+
+model wishart_notices {
+  id         Int       @id @default(autoincrement())
+  content    String    @db.Text
+  display    Boolean?  @default(false)
+  created_at DateTime? @db.DateTime(0)
+  updated_at DateTime? @db.DateTime(0)
+}
+
+model dish {
+  id         Int     @id @default(autoincrement())
+  name       String? @db.VarChar(45)
+  unit       String? @db.VarChar(45)
+  ingredient String? @db.VarChar(45)
+  quantity   Int?
+  id_recipe  Int?
+  image      String? @db.VarChar(256)
+}
+
+model user {
+  iduser   Int     @id @default(autoincrement())
+  email    String? @unique(map: "email_UNIQUE") @db.VarChar(45)
+  password String? @db.VarChar(256)
+  level    Int?
+  status   Int?
+  username String? @db.VarChar(45)
+}

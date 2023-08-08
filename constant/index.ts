@@ -1,0 +1,7 @@
+export enum EStatusCode {
+    VERIFY = 1001,
+    WRONG_PASSWORD = 1003,
+    WRONG_EMAIL = 1004,
+    DUPLICATE_EMAIL = 1008,
+    EMAIL_NOT_REGISTED = 1009,
+}
