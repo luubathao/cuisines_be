@@ -13,7 +13,7 @@
     "start:debug": "nest start --debug --watch",
     "migrate": "prisma migrate dev --schema=./prisma/schema.prisma",
     "pull": "prisma db pull & prisma generate",
-    "start:prod": "node dist/src/main",
+    "start:prod": "prisma pull & node dist/src/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
